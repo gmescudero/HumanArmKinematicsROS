@@ -237,7 +237,7 @@
 	</joint>
 	<joint name="sh_y" type="revolute">
 		<limit lower="-1.5707963267948966" upper="1.5707963267948966" effort="12" velocity="2.443"/>
-		<axis xyz="0 0 1" />
+		<axis xyz="0 0 -1" />
 		<parent link="L1_joint" />
 		<child link="L2_joint" />
 		<origin xyz="0 0 0" rpy="0.785398163397448 1.57079632679490 -0.785398163397448" />
@@ -258,7 +258,7 @@
 	</joint>
 	<joint name="el_x" type="revolute">
 		<limit lower="-1.9198621771937625" upper="0.5235987755982988" effort="12" velocity="2.443"/>
-		<axis xyz="0 0 1" />
+		<axis xyz="0 0 -1" />
 		<parent link="L4_joint" />
 		<child link="L5_joint" />
 		<origin xyz="0 0 0" rpy="1.57079632679490 0 0" />

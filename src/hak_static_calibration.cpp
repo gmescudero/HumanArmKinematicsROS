@@ -1,10 +1,6 @@
 #include "ros/ros.h"
 #include "sensor_msgs/JointState.h"
 
-#define TOPIC_PUB "/joints_set"         // Rviz topic
-#define NODE_NAME "hak_publisher_node"  // Node name
-#define ROS_RATE (10)                   // Loop rate (in Hz)
-
 extern "C"{
 #include "launch.h"
 #include "general.h"
@@ -13,15 +9,17 @@ extern "C"{
 #include "arm.h"
 }
 
+#define TOPIC_PUB "/joints_set" // Rviz topic
+#define NODE_NAME "hak_pub_static_calib_node" // Node name
+#define ROS_RATE (10) // Loop rate (in Hz)
+
 class Hak {
 private:
   ERROR_CODE status; // The error code of the HAK library
   sensor_msgs::JointState jointsMsg; // Standard joints positions to be published
   int imusNum; // Number of IMUs connected
-  double elbowRotFE[3] = {0,0,1}; // Rotation vector 1 of the elbow from the sensor coordinates
-  double elbowRotPS[3] = {1,0,0}; // Rotation vector 2 of the elbow from the sensor coordinates
-  Quaternion q1; // Orientation quaternion of the arm sensor 
-  Quaternion q2; // Orientation quaternion of the forearm sensor 
+  ImuData data[2]; // Imus data
+  Quaternion read_quats[2];
 
   /**
    * @brief Hak procedure setup
@@ -51,46 +49,46 @@ private:
       sleep_s(2);
     }
 
-    /* Loop while gathering data for two axes calibration */
+    /* Retrieve current IMU data */
     if (RET_OK == status) {
-      int observations;
-      do {
-        if (RET_OK == status) sleep_s(1);
-        if (RET_OK == status) status = cal_gn2_observations_from_database_update();
-        observations = db_field_buffer_current_size_get(DB_CALIB_OMEGA,0);
-        ROS_INFO("Current observations count: %d/%d",observations,CALIB_TWO_ROT_AXES_WINDOW);
-      } while (RET_OK == status && CALIB_TWO_ROT_AXES_WINDOW > observations);
-      
-      ROS_INFO(" -> [USER]: Finished recording calibration data");
+      ROS_INFO("Calibrate IMU sensors");
+      ROS_INFO(" -> [USER]: Stand in T-pose to calibrate IMU orientations");
+      if (RET_OK == status) sleep_s(4);
+      /* Reset IMUs offset */
+      if (RET_OK == status) {
+          status = imu_orientation_offset_reset();
+          if (RET_OK != status) ROS_ERROR("Failed to reset IMU sensors orientation");
+      }
+      /* Read data for calibration*/
+      if (RET_OK == status) status = imu_batch_read(imusNum, data);
+      if (RET_OK != status) ROS_ERROR("Failed to read IMUs data");
     }
 
-    /* Perform calibration algorithm */
+    /* Set calibration data */
     if (RET_OK == status) {
-      ROS_INFO("Calibrating rotation two axes");
-
-      status = cal_gn2_two_rot_axes_calib(elbowRotFE,elbowRotPS);
-      if (RET_OK != status) ROS_ERROR("Failed to initialize reading callback for IMU sensors");
-      else {
-        ROS_INFO("Finished two axes calibration: ");
-        ROS_INFO("\tRotation vector 1:[%f,%f,%f]", elbowRotFE[0],elbowRotFE[1], elbowRotFE[2]);
-        ROS_INFO("\tRotation vector 2:[%f,%f,%f]", elbowRotPS[0],elbowRotPS[1], elbowRotPS[2]);
+      Quaternion known_quats[2] = { /* Quats for T-pose */
+          {.w = 1.0, .v={0.0, 0.0, 0.0}},
+          {.w = 1.0, .v={0.0, 0.0, 0.0}},
+      };
+      for (int imu = 0; imu < imusNum; imu++) {
+        quaternion_from_float_buffer_build(data[imu].q, &read_quats[imu]);
       }
-    }
-
-    /* Set the angles to zero in the current pose */
-    if (RET_OK == status) {
-      ROS_INFO("Set the zero point");
-      ROS_INFO(" -> [USER]: Stand in a pose to be considered as zero in 5");
-      for (int i = 4; RET_OK == status && i >= 0; i--) {
-        sleep_s(1);
-        ROS_INFO(" -> [USER]: %d",i);
-        if (1 == i) status = imu_orientation_offset_set(1);
-      }
-      if (RET_OK == status) _imusQuatsFromDbSet();
-      if (RET_OK == status) status = arm_elbow_angles_zero(0.0,0.0,q1,q2,elbowRotFE,elbowRotPS);
+      cal_static_imu_quat_calibration_set(known_quats, read_quats);
+      /* Get the current quaternions */
+      double z_vect[] = {0,0,1};
+      double x_vect[] = {-1,0,0};
+      if (RET_OK == status) status = cal_static_imu_quat_calibrated_data_get(read_quats);
+      if (RET_OK == status) status = arm_elbow_angles_zero(0.0,0.0,read_quats[0],read_quats[1],z_vect,x_vect);
       if (RET_OK == status) ROS_INFO(" -> [USER]: Zero position set ");
       else                  ROS_ERROR("Failed to perform zero procedure");
-    } 
+    }
+
+    /* Start IMU reading callbacks */
+    for (int imu = 0; RET_OK == status && imu < imusNum; imu++) {
+      status = imu_read_callback_attach(imu, 0==imu);
+      if (RET_OK != status) ROS_ERROR("Failed to initialize reading callback for IMU sensor %d",imu);
+      else sleep_s(2);
+    }
   }
 
   /**
@@ -112,20 +110,6 @@ private:
       jointsMsg.position.push_back(elbow[ALPHA_FE]);
       jointsMsg.position.push_back(elbow[GAMMA_PS]);
     }
-  }
-
-  /**
-   * @brief Retrieve quaternion orientations of each IMU sensor and fill quaternion attributes
-   * 
-   */
-  void _imusQuatsFromDbSet() {
-    // Get the current quaternions 
-    double qBuff[4];
-    if (RET_OK == status) status = db_read(DB_IMU_QUATERNION,0,qBuff);
-    if (RET_OK == status) quaternion_from_buffer_build(qBuff, &q1);
-    if (RET_OK == status) status = db_read(DB_IMU_QUATERNION,1,qBuff);
-    if (RET_OK == status) quaternion_from_buffer_build(qBuff, &q2);   
-    if (RET_OK != status) ROS_ERROR("Failed to retrieve current sensor quaternions");
   }
 
 public:
@@ -162,17 +146,23 @@ public:
     while(ros::ok() && RET_OK == status) {
 
       /* Get current sensor data from database */
-      if (RET_OK == status) _imusQuatsFromDbSet();
+      if (RET_OK == status) {
+        status = cal_static_imu_quat_calibrated_data_get(read_quats);
+        if (RET_OK != status) ROS_ERROR("Failed to retrieve calibrated imus");
+      }
 
       /* Compute current shoulder angles */
       if (RET_OK == status) {
-        status = arm_shoulder_angles_compute(q1,NULL);
+        status = arm_shoulder_angles_compute(read_quats[0],NULL);
         if (RET_OK != status) ROS_ERROR("Failed to compute shoulder angles");
       }
 
       /* Compute current elbow angles */
       if (RET_OK == status) {
-        status = arm_elbow_angles_from_rotation_vectors_get(q1,q2,elbowRotFE,elbowRotPS,NULL);
+        double z_vect[] = { 0,0,1};
+        double x_vect[] = {-1,0,0};
+        status = arm_elbow_angles_from_rotation_vectors_get(
+          read_quats[0],read_quats[1],z_vect,x_vect,NULL);
         if (RET_OK != status) ROS_ERROR("Failed to compute elbow angles");
       }
 
@@ -181,6 +171,9 @@ public:
         _jointsMsgFromDbSet();
         if (RET_OK == status) pub.publish(jointsMsg);
       }
+
+      db_field_print(DB_IMU_QUATERNION,0);
+      db_field_print(DB_IMU_QUATERNION,1);
 
       /* If iteration not executed reset error code */
       if (RET_NO_EXEC == status) status = RET_OK;
