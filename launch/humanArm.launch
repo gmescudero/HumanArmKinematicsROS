@@ -1,0 +1,24 @@
+<launch>
+    <arg name="model" default="$(find hak_package)/urdf/humanArm5.urdf"/>
+    <arg name="gui" default="false"/>
+    <arg name="rvizconfig" default="$(find hak_package)/rviz/urdf.rviz" />
+
+    <param name="robot_description" textfile="$(arg model)"/>
+    <param name="use_gui" value="$(arg gui)"/>
+    
+    <node name="joint_state_publisher" pkg="joint_state_publisher" type="joint_state_publisher">
+        <param name="use_gui" value="$(arg gui)"/>
+        <rosparam param="source_list">["joints_set"]</rosparam>
+    </node>
+    <node name="robot_state_publisher" pkg="robot_state_publisher" type="robot_state_publisher" />
+    <node name="rviz" pkg="rviz" type="rviz" args="-d $(arg rvizconfig)" required="true" />
+
+    <!--rosparams-->
+    <!-- <rosparam command="load" file="$(find genrobot_ros_node)/config/grn_config.yaml" /> -->
+
+    <!--launches gr ros node-->
+    <node name="hak_publisher_node" pkg="hak_package" type="hak_publisher_node" output="screen" />
+
+    <!--launches bridge to Rviz-->
+    <!-- <node name="genrobotCmmController_node" pkg="cmm" type="genrobotCmmController_node" output="screen" />  -->
+</launch>

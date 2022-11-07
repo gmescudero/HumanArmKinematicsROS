@@ -1,0 +1,272 @@
+<?xml version='1.0'?>
+
+<!-- URDF file generated with KinematicsGenerator package -->
+<!-- https://github.com/gmescudero/KinematicsGenerator -->
+<robot name="humanArm5">
+	<!-- ******************* WORLD LINK ******************* -->
+	<link name="world">
+		<origin xyz="0 0 0" rpy="0 0 0" />
+	</link>
+	<!-- ******************* L1 LINK ******************* -->
+	<link name="L1_joint">
+		<visual>
+			<origin xyz="0 0 0" rpy="0 0 0" />
+			<geometry>
+				<cylinder radius="0.4320241867756754" length="1.7280967471027016" />
+			</geometry>
+			<material name="red">
+				<color rgba="1 0 0 1.0"/>
+			</material>
+		</visual>
+	</link>
+	<link name="L1">
+		<visual>
+			<origin xyz="0 0 0.0" rpy="0 0 0" />
+			<geometry>
+				<cylinder radius="0.2160120933878377" length="0.0" />
+			</geometry>
+			<material name="red">
+				<color rgba="1 0 0 1.0"/>
+			</material>
+		</visual>
+		<collision>
+			<origin xyz="0.0 0 0.0" rpy="0 0 0" />
+			<geometry>
+				<cylinder radius="0.2160120933878377" length="0.0" />
+			</geometry>
+		</collision>
+		<inertial>
+			<mass value="0.0" />
+			<inertia ixx="0.0" ixy="0.0" ixz="0.0"  iyy="0.0" iyz="0.0" izz="0.0" />
+		</inertial>
+	</link>
+	<joint name="L1_joint" type="fixed">
+		<origin xyz="0 0 0" rpy="0 0 0"/>
+		<parent link="L1_joint"/>
+		<child link="L1"/>
+	</joint>
+	<!-- ******************* L2 LINK ******************* -->
+	<link name="L2_joint">
+		<visual>
+			<origin xyz="0 0 0" rpy="0 0 0" />
+			<geometry>
+				<cylinder radius="0.4320241867756754" length="1.7280967471027016" />
+			</geometry>
+			<material name="green">
+				<color rgba="0 1 0 1.0"/>
+			</material>
+		</visual>
+	</link>
+	<link name="L2">
+		<visual>
+			<origin xyz="0 0 0.0" rpy="0 0 0" />
+			<geometry>
+				<cylinder radius="0.2160120933878377" length="0.0" />
+			</geometry>
+			<material name="green">
+				<color rgba="0 1 0 1.0"/>
+			</material>
+		</visual>
+		<collision>
+			<origin xyz="0.0 0 0.0" rpy="0 0 0" />
+			<geometry>
+				<cylinder radius="0.2160120933878377" length="0.0" />
+			</geometry>
+		</collision>
+		<inertial>
+			<mass value="0.0" />
+			<inertia ixx="0.0" ixy="0.0" ixz="0.0"  iyy="0.0" iyz="0.0" izz="0.0" />
+		</inertial>
+	</link>
+	<joint name="L2_joint" type="fixed">
+		<origin xyz="0 0 0" rpy="0 0 0"/>
+		<parent link="L2_joint"/>
+		<child link="L2"/>
+	</joint>
+	<!-- ******************* L3 LINK ******************* -->
+	<link name="L3_joint">
+		<visual>
+			<origin xyz="0 0 0" rpy="0 0 0" />
+			<geometry>
+				<cylinder radius="0.37030644580772176" length="1.481225783230887" />
+			</geometry>
+			<material name="blue">
+				<color rgba="0 0 1 1.0"/>
+			</material>
+		</visual>
+	</link>
+	<link name="L3">
+		<visual>
+			<origin xyz="0 0 5.0" rpy="0 0 0" />
+			<geometry>
+				<cylinder radius="0.18515322290386088" length="10.0" />
+			</geometry>
+			<material name="blue">
+				<color rgba="0 0 1 1.0"/>
+			</material>
+		</visual>
+		<collision>
+			<origin xyz="5.0 0 10.0" rpy="0 0 0" />
+			<geometry>
+				<cylinder radius="0.18515322290386088" length="10.0" />
+			</geometry>
+		</collision>
+		<inertial>
+			<mass value="1.0769918698627126" />
+			<inertia ixx="8.984162531197166" ixy="0.0" ixz="0.0"  iyy="8.984162531197166" iyz="0.0" izz="8.974932248855938" />
+		</inertial>
+	</link>
+	<joint name="L3_joint" type="fixed">
+		<origin xyz="0 0 0" rpy="0 3.141592653589793 0"/>
+		<parent link="L3_joint"/>
+		<child link="L3"/>
+	</joint>
+	<!-- ******************* L4 LINK ******************* -->
+	<link name="L4_joint">
+		<visual>
+			<origin xyz="0 0 0" rpy="0 0 0" />
+			<geometry>
+				<cylinder radius="0.37030644580772176" length="1.481225783230887" />
+			</geometry>
+			<material name="cyan">
+				<color rgba="0 1 1 1.0"/>
+			</material>
+		</visual>
+	</link>
+	<link name="L4">
+		<visual>
+			<origin xyz="0 0 0.0" rpy="0 0 0" />
+			<geometry>
+				<cylinder radius="0.18515322290386088" length="0.0" />
+			</geometry>
+			<material name="cyan">
+				<color rgba="0 1 1 1.0"/>
+			</material>
+		</visual>
+		<collision>
+			<origin xyz="0.0 0 0.0" rpy="0 0 0" />
+			<geometry>
+				<cylinder radius="0.18515322290386088" length="0.0" />
+			</geometry>
+		</collision>
+		<inertial>
+			<mass value="0.0" />
+			<inertia ixx="0.0" ixy="0.0" ixz="0.0"  iyy="0.0" iyz="0.0" izz="0.0" />
+		</inertial>
+	</link>
+	<joint name="L4_joint" type="fixed">
+		<origin xyz="0 0 0" rpy="0 0 0"/>
+		<parent link="L4_joint"/>
+		<child link="L4"/>
+	</joint>
+	<!-- ******************* L5 LINK ******************* -->
+	<link name="L5_joint">
+		<visual>
+			<origin xyz="0 0 0" rpy="0 0 0" />
+			<geometry>
+				<cylinder radius="0.30858870483976814" length="1.2343548193590725" />
+			</geometry>
+			<material name="magenta">
+				<color rgba="1 0 1 1.0"/>
+			</material>
+		</visual>
+	</link>
+	<link name="L5">
+		<visual>
+			<origin xyz="0 0 2.5" rpy="0 0 0" />
+			<geometry>
+				<cylinder radius="0.15429435241988407" length="5.0" />
+			</geometry>
+			<material name="magenta">
+				<color rgba="1 0 1 1.0"/>
+			</material>
+		</visual>
+		<collision>
+			<origin xyz="2.5 0 5.0" rpy="0 0 0" />
+			<geometry>
+				<cylinder radius="0.15429435241988407" length="5.0" />
+			</geometry>
+		</collision>
+		<inertial>
+			<mass value="0.3739555103689974" />
+			<inertia ixx="0.7812996460092025" ixy="0.0" ixz="0.0"  iyy="0.7812996460092025" iyz="0.0" izz="0.7790739799354112" />
+		</inertial>
+	</link>
+	<joint name="L5_joint" type="fixed">
+		<origin xyz="0 0 0" rpy="0 3.141592653589793 0"/>
+		<parent link="L5_joint"/>
+		<child link="L5"/>
+	</joint>
+	<!-- ******************* L6 LINK ******************* -->
+	<link name="L6_joint">
+	</link>
+	<link name="L6">
+		<visual>
+			<origin xyz="0 0 0.4" rpy="0 0 0" />
+			<geometry>
+				<cylinder radius="0.15429435241988407" length="0.8" />
+			</geometry>
+			<material name="magenta">
+				<color rgba="1 0 1 1.0"/>
+			</material>
+		</visual>
+		<collision>
+			<origin xyz="0.4 0 0.8" rpy="0 0 0" />
+			<geometry>
+				<cylinder radius="0.15429435241988407" length="0.8" />
+			</geometry>
+		</collision>
+		<inertial>
+			<mass value="0.059832881659039584" />
+			<inertia ixx="0.0035471935936220566" ixy="0.0" ixz="0.0"  iyy="0.0035471935936220566" iyz="0.0" izz="0.003191087021815445" />
+		</inertial>
+	</link>
+	<joint name="L6_joint" type="fixed">
+		<origin xyz="0 0 0" rpy="0 -1.5707963267948966 0"/>
+		<parent link="L6_joint"/>
+		<child link="L6"/>
+	</joint>
+
+	<!-- ********************* JOINTS ********************* -->
+	<joint name="sh_z" type="revolute">
+		<limit lower="-1.5707963267948966" upper="2.8797932657906435" effort="12" velocity="2.443"/>
+		<axis xyz="0 0 1" />
+		<parent link="world" />
+		<child link="L1_joint" />
+		<origin xyz="0 0 0" rpy="0 0 0" />
+	</joint>
+	<joint name="sh_y" type="revolute">
+		<limit lower="-1.5707963267948966" upper="1.5707963267948966" effort="12" velocity="2.443"/>
+		<axis xyz="0 0 1" />
+		<parent link="L1_joint" />
+		<child link="L2_joint" />
+		<origin xyz="0 0 0" rpy="0.785398163397448 1.57079632679490 -0.785398163397448" />
+	</joint>
+	<joint name="sh_x" type="revolute">
+		<limit lower="-1.5707963267948966" upper="1.5707963267948966" effort="12" velocity="2.443"/>
+		<axis xyz="0 0 1" />
+		<parent link="L2_joint" />
+		<child link="L3_joint" />
+		<origin xyz="0 0 0" rpy="-0.785398163397448 1.57079632679490 0.785398163397448" />
+	</joint>
+	<joint name="el_z" type="revolute">
+		<limit lower="0" upper="2.8797932657906435" effort="12" velocity="2.443"/>
+		<axis xyz="0 0 1" />
+		<parent link="L3_joint" />
+		<child link="L4_joint" />
+		<origin xyz="0 0 -10" rpy="-1.57079632679490 0 0" />
+	</joint>
+	<joint name="el_x" type="revolute">
+		<limit lower="-1.9198621771937625" upper="0.5235987755982988" effort="12" velocity="2.443"/>
+		<axis xyz="0 0 1" />
+		<parent link="L4_joint" />
+		<child link="L5_joint" />
+		<origin xyz="0 0 0" rpy="1.57079632679490 0 0" />
+	</joint>
+	<joint name="el_x_" type="fixed">
+		<parent link="L5_joint" />
+		<child link="L6_joint" />
+		<origin xyz="0 0 -5" rpy="-1.57079632679490 0 0" />
+	</joint>
+
+</robot>

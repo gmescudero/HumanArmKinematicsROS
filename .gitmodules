@@ -1,0 +1,3 @@
+[submodule "src/humanArmkinematics"]
+	path = src/humanArmkinematics
+	url = https://github.com/gmescudero/humanArmkinematics.git
