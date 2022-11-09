@@ -107,10 +107,10 @@ private:
     if (RET_OK == status) {
       jointsMsg.position.clear();
       jointsMsg.position.push_back(shoulder[SH_ABDUCTION]);
-      jointsMsg.position.push_back(shoulder[SH_FLEXION]);
+      jointsMsg.position.push_back(-shoulder[SH_FLEXION]);
       jointsMsg.position.push_back(shoulder[SH_ROTATION]);
       jointsMsg.position.push_back(elbow[ALPHA_FE]);
-      jointsMsg.position.push_back(elbow[GAMMA_PS]);
+      jointsMsg.position.push_back(-elbow[GAMMA_PS]);
     }
   }
 

@@ -1,5 +1,17 @@
+/**
+ * @file hak_oz_static_calib.cpp
+ * @author German Moreno Escudero
+ * @brief This ROS node subscribes to LPMS IMU data coming from OpenZen library and computes arm position joints 
+ *      through a static calibration process.
+ * @version 0.1
+ * @date 2022-11-09
+ * 
+ * @copyright Copyright (c) 2022
+ * 
+ */
 #include "ros/ros.h"
 #include "sensor_msgs/JointState.h"
+#include "sensor_msgs/Imu.h"
 
 extern "C"{
 #include "launch.h"
@@ -9,14 +21,18 @@ extern "C"{
 #include "arm.h"
 }
 
+#define TOPIC_SUB_1 "/s1_imu" // First sensor topic
+#define TOPIC_SUB_2 "/s2_imu" // Second sensor topic
 #define TOPIC_PUB "/joints_set" // Rviz topic
-#define NODE_NAME "hak_pub_static_calib_node" // Node name
-#define ROS_RATE (10) // Loop rate (in Hz)
+#define NODE_NAME "hak_pub_oz_static_calib_node" // Node name
+#define ROS_RATE (100) // Loop rate (in Hz)
 
 class Hak {
 private:
   ERROR_CODE status; // The error code of the HAK library
   sensor_msgs::JointState jointsMsg; // Standard joints positions to be published
+  sensor_msgs::Imu imuMsg1; // Standard IMU data retrieved from OpenZen first imu
+  sensor_msgs::Imu imuMsg2; // Standard IMU data retrieved from OpenZen second imu
   int imusNum; // Number of IMUs connected
   ImuData data[2]; // Imus data
   Quaternion read_quats[2];
@@ -112,6 +128,66 @@ private:
     }
   }
 
+  /**
+   * @brief Update database with imus data
+   * 
+   * @param index (input) The imu index
+   * @param msg (input) The imu data
+   */
+  void _imuDatabaseUpdate(int index, const sensor_msgs::Imu::ConstPtr& msg) {
+    double timestamp = 1e-6*msg->header.stamp.toNSec();
+    double acc[3]    = {msg->linear_acceleration.x,msg->linear_acceleration.y,msg->linear_acceleration.z};
+    double gyr[3]    = {msg->angular_velocity.x,msg->angular_velocity.y,msg->angular_velocity.z};
+    double linAcc[3] = {msg->linear_acceleration.x,msg->linear_acceleration.y,msg->linear_acceleration.z};
+    double angVel[3] = {msg->angular_velocity.x,msg->angular_velocity.y,msg->angular_velocity.z};
+    /* TODO: Sometimes, IMUs rotating axes are swapped for unknown reasons and mess with everything else that uses them. 
+            Find a way to detect/avoid that swapping. */
+    // double quat[4]   = {msg->orientation.w,msg->orientation.x,msg->orientation.y,msg->orientation.z}; 
+    double quat[4]   = {msg->orientation.w,-msg->orientation.x,-msg->orientation.y,-msg->orientation.z}; 
+    int newData      = (int)true;
+    
+    status = db_write(DB_IMU_TIMESTAMP, index, &timestamp);
+
+    if (RET_OK == status) {
+        status = db_write(DB_IMU_ACCELEROMETER, index, &acc);
+    }
+    if (RET_OK == status) {
+        status = db_write(DB_IMU_GYROSCOPE, index, &gyr);
+    }
+    if (RET_OK == status) {
+        status = db_write(DB_IMU_LINEAR_ACCELERATION, index, &linAcc);
+    }
+    if (RET_OK == status) {
+        status = db_write(DB_IMU_ANGULAR_VELOCITY, index, &angVel);
+    }
+    if (RET_OK == status) {
+        status = db_write(DB_IMU_QUATERNION, index, &quat);
+    }
+    if (RET_OK == status) {
+        status = db_write(DB_IMU_NEW_DATA, index, &newData);
+    }
+    if (RET_OK != status) {
+        ROS_ERROR("Failed to update database fileds with IMU%d data",index);
+    }
+  }
+
+  /**
+   * @brief First imu topic subscriber callback
+   * 
+   * @param msg (input) The received Imu data
+   */
+  void _imu1DataGetCallback(const sensor_msgs::Imu::ConstPtr& msg){
+    _imuDatabaseUpdate(0,msg);
+  }
+  /**
+   * @brief Second imu topic subscriber callback
+   * 
+   * @param msg (input) The received Imu data
+   */
+  void _imu2DataGetCallback(const sensor_msgs::Imu::ConstPtr& msg){
+    _imuDatabaseUpdate(1,msg);
+  }
+
 public:
   /**
    * @brief Construct the Hak object
@@ -128,6 +204,9 @@ public:
     ros::Rate       rh(ROS_RATE);
     // Create the joints publisher
     ros::Publisher  pub = nh.advertise<sensor_msgs::JointState>(TOPIC_PUB, 10);
+    // Create the imus data subscribers
+    ros::Subscriber sub1 = nh.subscribe(TOPIC_SUB_1, 40, &Hak::_imu1DataGetCallback, this);
+    ros::Subscriber sub2 = nh.subscribe(TOPIC_SUB_2, 40, &Hak::_imu2DataGetCallback, this);
 
     // Initialize ROS message
     jointsMsg.header.frame_id.assign("jointSetPointScheduler");
@@ -168,12 +247,10 @@ public:
 
       /* Publish the current joint angles */
       if (RET_OK == status) {
+        // Retrieve the shoulder and elbow angles from the database and set the joints vector
         _jointsMsgFromDbSet();
         if (RET_OK == status) pub.publish(jointsMsg);
       }
-
-      db_field_print(DB_IMU_QUATERNION,0);
-      db_field_print(DB_IMU_QUATERNION,1);
 
       /* If iteration not executed reset error code */
       if (RET_NO_EXEC == status) status = RET_OK;
