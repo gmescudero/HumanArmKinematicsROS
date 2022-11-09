@@ -2,6 +2,12 @@
     <arg name="model" default="$(find hak_package)/urdf/humanArm5.urdf"/>
     <arg name="gui" default="false"/>
     <arg name="rvizconfig" default="$(find hak_package)/rviz/urdf.rviz" />
+    <arg name="s1_name" default="LPMSRS2000176"/>
+    <arg name="s2_name" default="LPMSRS2000177"/>
+    <arg name="s1_node_name" default="s1_node"/>
+    <arg name="s2_node_name" default="s2_node"/>
+    <arg name="s1_topic_name" default="/s1_imu"/>
+    <arg name="s2_topic_name" default="/s2_imu"/>
 
     <param name="robot_description" textfile="$(arg model)"/>
     <param name="use_gui" value="$(arg gui)"/>
@@ -15,6 +21,9 @@
 
     <!--rosparams-->
     <!-- <rosparam command="load" file="$(find genrobot_ros_node)/config/grn_config.yaml" /> -->
+
+    <node name="$(arg s1_node_name)" pkg="openzen_sensor" type="openzen_sensor_node" output="screen" args="_sensor_name:=$(arg s1_name) imu:=$(arg s1_topic_name)"/>
+    <node name="$(arg s2_node_name)" pkg="openzen_sensor" type="openzen_sensor_node" output="screen" args="_sensor_name:=$(arg s2_name) imu:=$(arg s2_topic_name)"/>
 
     <!--launches gr ros node-->
     <node name="hak_pub_oz_static_calib_node" pkg="hak_package" type="hak_pub_oz_static_calib_node" output="screen" />
