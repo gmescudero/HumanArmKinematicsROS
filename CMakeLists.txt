@@ -180,6 +180,12 @@ target_link_libraries(hak_pub_oz_static_calib_node
   humanak
 )
 
+add_executable(hak_pub_oz_trac_node src/hak_oz_trac.cpp)
+target_link_libraries(hak_pub_oz_trac_node
+  ${catkin_LIBRARIES}
+  humanak
+)
+
 #############
 ## Install ##
 #############
