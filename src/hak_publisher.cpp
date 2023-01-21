@@ -10,7 +10,8 @@ extern "C"{
 #include "general.h"
 #include "imu.h"
 #include "calib.h"
-#include "arm.h"
+#include "arm_kin.h"
+#include "Quaternion.h"
 }
 
 class Hak {

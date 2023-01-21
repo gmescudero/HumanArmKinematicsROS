@@ -9,8 +9,11 @@
     <node name="$(arg s1_node_name)" pkg="openzen_sensor" type="openzen_sensor_node" output="screen" args="_sensor_name:=$(arg s1_name) imu:=$(arg s1_topic_name)"/>
     <node name="$(arg s2_node_name)" pkg="openzen_sensor" type="openzen_sensor_node" output="screen" args="_sensor_name:=$(arg s2_name) imu:=$(arg s2_topic_name)"/>
 
+    <!-- <node name="openzen_plot" pkg="rqt_plot" type="rqt_plot" output="screen" 
+        args="$(arg s1_topic_name)/data/linear_acceleration $(arg s2_topic_name)/data/linear_acceleration"/> -->
+
     <node name="openzen_plot" pkg="rqt_plot" type="rqt_plot" output="screen" 
-        args="$(arg s1_topic_name)/data/linear_acceleration $(arg s2_topic_name)/data/linear_acceleration"/>
+        args="$(arg s1_topic_name)/mag/magnetic_field $(arg s2_topic_name)/mag/magnetic_field"/>
 
 </launch>
 

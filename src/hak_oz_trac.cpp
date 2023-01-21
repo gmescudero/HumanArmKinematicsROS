@@ -18,7 +18,7 @@ extern "C"{
 #include "general.h"
 #include "imu.h"
 #include "calib.h"
-#include "arm.h"
+#include "arm_kin.h"
 }
 
 #define TOPIC_SUB_1 "/s1_imu/data" // First sensor topic

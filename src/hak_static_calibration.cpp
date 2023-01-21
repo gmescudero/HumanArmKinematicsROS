@@ -6,7 +6,7 @@ extern "C"{
 #include "general.h"
 #include "imu.h"
 #include "calib.h"
-#include "arm.h"
+#include "arm_kin.h"
 }
 
 #define TOPIC_PUB "/joints_set" // Rviz topic
