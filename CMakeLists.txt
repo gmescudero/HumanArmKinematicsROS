@@ -129,6 +129,13 @@ include_directories(
 )
 link_directories(${HAK_ROOT})
 
+## This command compiles the Human Arm Kinematics library
+add_custom_command(
+  OUTPUT humanak
+  WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/${HAK_ROOT}
+  COMMAND $(MAKE) lib
+) 
+
 ## Declare a C++ library
 # add_library(${PROJECT_NAME}
 #   src/${PROJECT_NAME}/hak_package.cpp
@@ -167,27 +174,32 @@ link_directories(${HAK_ROOT})
 # target_link_libraries(listener ${catkin_LIBRARIES})
 # add_dependencies(listener beginner_tutorials_generate_messages_cpp)
 
+## Used to call the building command for the Human Arm Kinematics library
+add_custom_target(humanak_lib ALL DEPENDS ${CMAKE_CURRENT_BINARY_DIR}/humanak)
 
 add_executable(hak_publisher_node src/hak_publisher.cpp)
-add_dependencies(hak_publisher_node ${PROJECT_NAME}_generate_messages_cpp)
+add_dependencies(hak_publisher_node ${PROJECT_NAME}_generate_messages_cpp humanak_lib)
 target_link_libraries(hak_publisher_node
   ${catkin_LIBRARIES}
   humanak
 )
 
 add_executable(hak_pub_static_calib_node src/hak_static_calibration.cpp)
+add_dependencies(hak_pub_static_calib_node ${PROJECT_NAME}_generate_messages_cpp humanak_lib)
 target_link_libraries(hak_pub_static_calib_node
   ${catkin_LIBRARIES}
   humanak
 )
 
 add_executable(hak_pub_oz_static_calib_node src/hak_oz_static_calib.cpp)
+add_dependencies(hak_pub_oz_static_calib_node ${PROJECT_NAME}_generate_messages_cpp humanak_lib)
 target_link_libraries(hak_pub_oz_static_calib_node
   ${catkin_LIBRARIES}
   humanak
 )
 
 add_executable(hak_pub_oz_trac_node src/hak_oz_trac.cpp)
+add_dependencies(hak_pub_oz_trac_node ${PROJECT_NAME}_generate_messages_cpp humanak_lib)
 target_link_libraries(hak_pub_oz_trac_node
   ${catkin_LIBRARIES}
   humanak
