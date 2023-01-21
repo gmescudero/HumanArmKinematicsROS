@@ -11,6 +11,7 @@ find_package(catkin REQUIRED COMPONENTS
   roscpp
   rospy
   std_msgs
+  message_generation
 )
 
 ## System dependencies are found with CMake's conventions
@@ -59,6 +60,10 @@ find_package(catkin REQUIRED COMPONENTS
 #   Service1.srv
 #   Service2.srv
 # )
+add_service_files(
+  FILES
+  RecordElbowAngles.srv
+)
 
 ## Generate actions in the 'action' folder
 # add_action_files(
@@ -68,10 +73,11 @@ find_package(catkin REQUIRED COMPONENTS
 # )
 
 ## Generate added messages and services with any dependencies listed here
-# generate_messages(
-#   DEPENDENCIES
-#   std_msgs
-# )
+generate_messages(
+  DEPENDENCIES
+  roscpp
+  std_msgs
+)
 
 ################################################
 ## Declare ROS dynamic reconfigure parameters ##
@@ -163,6 +169,7 @@ link_directories(${HAK_ROOT})
 
 
 add_executable(hak_publisher_node src/hak_publisher.cpp)
+add_dependencies(hak_publisher_node ${PROJECT_NAME}_generate_messages_cpp)
 target_link_libraries(hak_publisher_node
   ${catkin_LIBRARIES}
   humanak

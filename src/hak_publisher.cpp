@@ -1,5 +1,6 @@
 #include "ros/ros.h"
 #include "sensor_msgs/JointState.h"
+#include "hak_package/RecordElbowAngles.h"
 
 #define TOPIC_PUB "/joints_set"         // Rviz topic
 #define NODE_NAME "hak_publisher_node"  // Node name
@@ -129,6 +130,21 @@ private:
     if (RET_OK != status) ROS_ERROR("Failed to retrieve current sensor quaternions");
   }
 
+  bool _recordElbowAngles(hak_package::RecordElbowAngles::Request  &req,
+                          hak_package::RecordElbowAngles::Response &res)
+  {
+    double elbow[3];
+    if (RET_OK == status) status = db_read(DB_ARM_ELBOW_ANGLES,0,elbow);
+    if (RET_OK == status) {
+      res.fe   = elbow[ALPHA_FE];
+      res.ps   = elbow[GAMMA_PS];
+      res.beta = elbow[BETA_CARRYING];
+      ROS_INFO("Recorded elbow angles: fe <%f>, ps <%f>, beta <%f>",res.fe,res.ps,res.beta);
+      return true;
+    }
+    return false;
+  }
+
 public:
   /**
    * @brief Construct the Hak object
@@ -145,6 +161,8 @@ public:
     ros::Rate       rh(ROS_RATE);
     // Create the joints publisher
     ros::Publisher  pub = nh.advertise<sensor_msgs::JointState>(TOPIC_PUB, 10);
+    // Create service to record elbow angles
+    ros::ServiceServer service = nh.advertiseService("elbowAngles", &Hak::_recordElbowAngles, this);
 
     // Initialize ROS message
     jointsMsg.header.frame_id.assign("jointSetPointScheduler");
