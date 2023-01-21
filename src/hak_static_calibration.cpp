@@ -1,5 +1,6 @@
 #include "ros/ros.h"
 #include "sensor_msgs/JointState.h"
+#include "hak_package/RecordElbowAngles.h"
 
 extern "C"{
 #include "launch.h"
@@ -112,6 +113,30 @@ private:
     }
   }
 
+  /**
+   * @brief This ROS service returns to the caller with the elbow angles at the calling time
+   * 
+   * @param req (input) request descriptor
+   * @param res (output) response descriptor
+   * @return true if the elbow angles are correctly read from the database
+   * @return false otherwise
+   */
+  bool _srv_recordElbowAngles(hak_package::RecordElbowAngles::Request  &req,
+                              hak_package::RecordElbowAngles::Response &res)
+  {
+    double elbow[3];
+    if (RET_OK == status) status = db_read(DB_ARM_ELBOW_ANGLES,0,elbow);
+    if (RET_OK == status) {
+      res.timestamp = ros::Time::now();
+      res.fe   = elbow[ALPHA_FE];
+      res.ps   = elbow[GAMMA_PS];
+      res.beta = elbow[BETA_CARRYING];
+      ROS_INFO("Recorded elbow angles: fe <%f>, ps <%f>, beta <%f>",res.fe,res.ps,res.beta);
+      return true;
+    }
+    return false;
+  }
+
 public:
   /**
    * @brief Construct the Hak object
@@ -128,6 +153,8 @@ public:
     ros::Rate       rh(ROS_RATE);
     // Create the joints publisher
     ros::Publisher  pub = nh.advertise<sensor_msgs::JointState>(TOPIC_PUB, 10);
+    // Create service to record elbow angles
+    ros::ServiceServer service = nh.advertiseService("elbowAngles", &Hak::_srv_recordElbowAngles, this);
 
     // Initialize ROS message
     jointsMsg.header.frame_id.assign("jointSetPointScheduler");

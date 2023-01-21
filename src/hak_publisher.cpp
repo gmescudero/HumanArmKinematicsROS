@@ -144,6 +144,7 @@ private:
     double elbow[3];
     if (RET_OK == status) status = db_read(DB_ARM_ELBOW_ANGLES,0,elbow);
     if (RET_OK == status) {
+      res.timestamp = ros::Time::now();
       res.fe   = elbow[ALPHA_FE];
       res.ps   = elbow[GAMMA_PS];
       res.beta = elbow[BETA_CARRYING];
