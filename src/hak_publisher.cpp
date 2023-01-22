@@ -58,7 +58,7 @@ private:
       int observations;
       do {
         if (RET_OK == status) sleep_s(1);
-        if (RET_OK == status) status = cal_gn2_observations_from_database_update();
+        if (RET_OK == status) status = cal_gn2_observations_from_database_update(0.0);
         observations = db_field_buffer_current_size_get(DB_CALIB_OMEGA,0);
         ROS_INFO("Current observations count: %d/%d",observations,CALIB_TWO_ROT_AXES_WINDOW);
       } while (RET_OK == status && CALIB_TWO_ROT_AXES_WINDOW > observations);

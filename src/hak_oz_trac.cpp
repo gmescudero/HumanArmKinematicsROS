@@ -20,6 +20,7 @@ extern "C"{
 #include "imu.h"
 #include "calib.h"
 #include "arm_kin.h"
+#include "vector3.h"
 }
 
 #define TOPIC_SUB_1 "/s1_imu/data" // First sensor topic
@@ -49,6 +50,10 @@ private:
   CALIB_STEPS calibrationStep; // Calibrating flag
   double calibrationStartTime; // Timestamp when starting calibration
 
+  double minObservationVelocity; // Threshold to consider the velocity enough
+  double referenceCalibrationError; // Calibration error after finishing first calibration procedure
+  double calibrationError; // Current calibration error
+
   /**
    * @brief Hak procedure setup
    * 
@@ -64,7 +69,7 @@ private:
    */
   void _hakCalibration() {
     /* Update the observations buffer */
-    if (RET_OK == status) status = cal_gn2_observations_from_database_update();
+    if (RET_OK == status) status = cal_gn2_observations_from_database_update(minObservationVelocity);
 
     switch (calibrationStep) {
       case NOT_DONE: 
@@ -81,6 +86,19 @@ private:
           calibrationStartTime = timestamp;
           ROS_INFO("\n\n\t\tStand in T-Pose to calibrate\n");
           if (RET_OK == status) status = cal_gn2_two_rot_axes_calib(elbowRotFE,elbowRotPS);
+          if (RET_OK == status) {
+            /* Calculate minimum velocity for recalibration observations */
+            DB_BUFFER_STATS stats = db_field_buffer_stats_compute(DB_CALIB_OMEGA,0);
+            double diff[3];
+            double diff_norm;
+            for (int i = 0; i < 3; i++) {
+              diff[i] = stats.max[i] - stats.min[i];
+            }
+            if (RET_OK == status) status = vector3_norm(stats.mean,&diff_norm);
+            if (RET_OK == status) minObservationVelocity = diff_norm*0.1;
+          }
+          /* Compute reference calibration error */
+          if (RET_OK == status) status = cal_gn2_root_mean_square(elbowRotFE,elbowRotPS, &referenceCalibrationError);
         }
         else if (2000 < timestamp - calibrationStartTime) {
           /* Log current progress in data gathering */
@@ -92,16 +110,30 @@ private:
       case ZEROING:
         /* Set the zero position */
         calibrationStep = DONE;
+        calibrationStartTime = timestamp;
         if (RET_OK == status) status = arm_elbow_angles_zero(
           0.0,0.0,q_sensors[0],q_sensors[1],elbowRotFE,elbowRotPS);
         if (RET_OK == status) ROS_INFO("\n\n\t\tZero position set\n");
         else                  ROS_ERROR("Failed to perform zero procedure");
         ROS_INFO("\tRotation vector 1:[%f,%f,%f]", elbowRotFE[0],elbowRotFE[1], elbowRotFE[2]);
         ROS_INFO("\tRotation vector 2:[%f,%f,%f]", elbowRotPS[0],elbowRotPS[1], elbowRotPS[2]);
+        ROS_INFO("\tMin observations velocity: %f",minObservationVelocity);
+        ROS_INFO("\tReference calibration error: %f",referenceCalibrationError);
         break;
       case DONE:
+        /* Check current error against reference and correct calibration when needed */
+        if (RET_OK == status) status = cal_gn2_root_mean_square(elbowRotFE,elbowRotPS, &calibrationError);
+        ROS_INFO("Current calibration error: %f (reference: %f)",calibrationError,referenceCalibrationError);
+        if (RET_OK == status && (calibrationError > referenceCalibrationError || 5000 < timestamp - calibrationStartTime)) {
+          calibrationStartTime = timestamp;
+          status = cal_gn2_two_rot_axes_calib_correct(elbowRotFE,elbowRotPS);
+          if (RET_OK == status) ROS_INFO("\n\n\t\tOnline recalibration performed <%f,%f,%f> <%f,%f,%f>\n",
+            elbowRotFE[0],elbowRotFE[1], elbowRotFE[2],elbowRotPS[0],elbowRotPS[1], elbowRotPS[2]);
+          else                  ROS_ERROR("Failed to perform online recalibration");
+        } 
+        break;
       default:
-        /* TODO: autocalib */
+        ROS_ERROR("Unknown calibration state");
         break;
     }
   }
@@ -225,7 +257,7 @@ public:
    * @param argc (input) Number of arguments given to the node
    * @param arg (input) Arguments given to the node
    */
-  Hak(int argc, char **argv):status(RET_OK),imusNum(2),newData(false),calibrationStep(NOT_DONE) {
+  Hak(int argc, char **argv):status(RET_OK),imusNum(2),newData(false),calibrationStep(NOT_DONE),minObservationVelocity(0.0) {
     // Initialize ROS
     ros::init(argc, argv, NODE_NAME);
     // Create a node handler
