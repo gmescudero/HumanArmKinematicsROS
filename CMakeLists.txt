@@ -184,34 +184,6 @@ target_link_libraries(hak_node
   humanak
 )
 
-add_executable(hak_publisher_node src/hak_publisher.cpp)
-add_dependencies(hak_publisher_node ${PROJECT_NAME}_generate_messages_cpp humanak_lib)
-target_link_libraries(hak_publisher_node
-  ${catkin_LIBRARIES}
-  humanak
-)
-
-add_executable(hak_pub_static_calib_node src/hak_static_calibration.cpp)
-add_dependencies(hak_pub_static_calib_node ${PROJECT_NAME}_generate_messages_cpp humanak_lib)
-target_link_libraries(hak_pub_static_calib_node
-  ${catkin_LIBRARIES}
-  humanak
-)
-
-add_executable(hak_pub_oz_static_calib_node src/hak_oz_static_calib.cpp)
-add_dependencies(hak_pub_oz_static_calib_node ${PROJECT_NAME}_generate_messages_cpp humanak_lib)
-target_link_libraries(hak_pub_oz_static_calib_node
-  ${catkin_LIBRARIES}
-  humanak
-)
-
-add_executable(hak_pub_oz_trac_node src/hak_oz_trac.cpp)
-add_dependencies(hak_pub_oz_trac_node ${PROJECT_NAME}_generate_messages_cpp humanak_lib)
-target_link_libraries(hak_pub_oz_trac_node
-  ${catkin_LIBRARIES}
-  humanak
-)
-
 #############
 ## Install ##
 #############
