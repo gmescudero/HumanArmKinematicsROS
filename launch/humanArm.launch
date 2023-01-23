@@ -1,0 +1,23 @@
+<launch>
+    <arg name="model" default="$(find hak_package)/urdf/humanArm5.urdf"/>
+    <arg name="gui" default="false"/>
+    <arg name="rvizconfig" default="$(find hak_package)/rviz/urdf.rviz" />
+
+    <!--rosparams-->
+    <rosparam file="$(find hak_package)/config/calib.yaml" />
+    <param name="robot_description" textfile="$(arg model)"/>
+    <param name="use_gui" value="$(arg gui)"/>
+    <param name="sensors_source" value="lpsensor"/>
+    
+    <!--rviz nodes-->
+    <node name="joint_state_publisher" pkg="joint_state_publisher" type="joint_state_publisher">
+        <param name="use_gui" value="$(arg gui)"/>
+        <rosparam param="source_list">["joints_set"]</rosparam>
+    </node>
+    <node name="robot_state_publisher" pkg="robot_state_publisher" type="robot_state_publisher" />
+    <node name="rviz" pkg="rviz" type="rviz" args="-d $(arg rvizconfig)" required="true" />
+
+    <!--launches ros node-->
+    <node name="hak_node" pkg="hak_package" type="hak_node" output="screen" />
+
+</launch>

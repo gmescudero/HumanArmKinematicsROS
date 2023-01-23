@@ -39,9 +39,6 @@ private:
 
     /* Read IMUs data for the given amount of time */
     if (RET_OK == status) {
-      ROS_INFO("Starting loop gathering IMU sensors data to calibrate rotation axes");
-      ROS_INFO(" -> [USER]: Perform arbitrary motions of the elbow including flexion/extension and pronation/supination");
-      
       /* Start IMU reading callbacks */
       for (int imu = 0; RET_OK == status && imu < imusNum; imu++) {
         status = imu_read_callback_attach(imu, 0==imu);
@@ -82,13 +79,6 @@ private:
       if (RET_OK == status) status = arm_elbow_angles_zero(0.0,0.0,calibratedQuats[0],calibratedQuats[1],z_vect,x_vect);
       if (RET_OK == status) ROS_INFO(" -> [USER]: Zero position set ");
       else                  ROS_ERROR("Failed to perform zero procedure");
-    }
-
-    /* Start IMU reading callbacks */
-    for (int imu = 0; RET_OK == status && imu < imusNum; imu++) {
-      status = imu_read_callback_attach(imu, 0==imu);
-      if (RET_OK != status) ROS_ERROR("Failed to initialize reading callback for IMU sensor %d",imu);
-      else sleep_s(2);
     }
   }
 
