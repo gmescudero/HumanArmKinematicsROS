@@ -73,16 +73,14 @@ private:
    * 
    */
   void _hakConfigSet(std::string calib_method, std::string imu_source) {
-    /* calib_method: "static" # "twoAxes" "twoAxesOnline"
-       sensors_source: "lpsensor" # "openzen" 
-    */
+    // Check calibration method from configuration
     if      (0 == calib_method.compare("static"))        configCalibMethod = STATIC;
     else if (0 == calib_method.compare("twoAxes"))       configCalibMethod = TWO_AXES;
     else if (0 == calib_method.compare("twoAxesOnline")) configCalibMethod = TWO_AXES_ONLINE;
     else {
       ROS_WARN("Invalid configuration of calibration method. Defaults to \"static\"");
     }
-
+    // Check sensor source from configuration
     if      (0 == imu_source.compare("lpsensor")) configImuSource = LPSENSOR;
     else if (0 == imu_source.compare("openzen"))  configImuSource = OPENZEN;
     else {
@@ -250,9 +248,8 @@ private:
               oldCalibError, calibrationError,referenceCalibrationError);
           ROS_INFO("\tRotation vector 1:[%f,%f,%f]", elbowRotFE[0],elbowRotFE[1], elbowRotFE[2]);
           ROS_INFO("\tRotation vector 2:[%f,%f,%f]", elbowRotPS[0],elbowRotPS[1], elbowRotPS[2]);
-
         }
-        else                  ROS_ERROR("Failed to perform online recalibration");
+        else ROS_ERROR("Failed to perform online recalibration");
       }
     } 
   }
@@ -304,6 +301,7 @@ private:
       if (STATIC == configCalibMethod) {
         Quaternion q_relative = arm_quaternion_between_two_get(q_sensors[0],q_sensors[1]);
         Quaternion_toEulerZYX(&q_relative,elbow);
+        status = db_write(DB_ARM_ELBOW_ANGLES,0,elbow);
       }
       else {
         status = db_read(DB_IMU_QUATERNION,0,&q_sensors[0]);
@@ -317,23 +315,12 @@ private:
     /* Fill the joint message */
     if (RET_OK == status) {
       jointsMsg.position.clear();
-      // jointsMsg.position.push_back( shoulder[SH_ABDUCTION]);
-      // jointsMsg.position.push_back(-shoulder[SH_FLEXION]);
-      // jointsMsg.position.push_back( shoulder[SH_ROTATION]);
-      // jointsMsg.position.push_back( 0.0);
-      // jointsMsg.position.push_back( 0.0);
-      // jointsMsg.position.push_back( 0.0);
-      // jointsMsg.position.push_back( elbow[ALPHA_FE]);
-      // jointsMsg.position.push_back( elbow[GAMMA_PS]);
-      // ROS_INFO("Carrying: %f",elbow[BETA_CARRYING]);
-
-
-      jointsMsg.position.clear();
       jointsMsg.position.push_back(shoulder[SH_ABDUCTION]);
       jointsMsg.position.push_back(-shoulder[SH_FLEXION]);
       jointsMsg.position.push_back(shoulder[SH_ROTATION]);
       jointsMsg.position.push_back(elbow[ALPHA_FE]);
       jointsMsg.position.push_back(elbow[GAMMA_PS]);
+      // ROS_INFO("Carrying: %f",elbow[BETA_CARRYING]);
     }
   }
 
@@ -370,7 +357,7 @@ private:
    * 
    * @param msg (input) The received Imu data
    */
-  void _imu1DataGetCallback(const sensor_msgs::Imu::ConstPtr& msg){
+  void _sub_imu1DataGetCallback(const sensor_msgs::Imu::ConstPtr& msg){
     _imuDatabaseUpdate(0,msg);
   }
   /**
@@ -378,7 +365,7 @@ private:
    * 
    * @param msg (input) The received Imu data
    */
-  void _imu2DataGetCallback(const sensor_msgs::Imu::ConstPtr& msg){
+  void _sub_imu2DataGetCallback(const sensor_msgs::Imu::ConstPtr& msg){
     _imuDatabaseUpdate(1,msg);
   }
 
@@ -442,8 +429,8 @@ public:
     ros::Subscriber sub1, sub2;
     if (OPENZEN == configImuSource) {
       ROS_INFO("Subscribe to Openzen topics for IMU data");
-      sub1 = nh.subscribe(TOPIC_SUB_1, 40, &Hak::_imu1DataGetCallback, this);
-      sub2 = nh.subscribe(TOPIC_SUB_2, 40, &Hak::_imu2DataGetCallback, this);
+      sub1 = nh.subscribe(TOPIC_SUB_1, 40, &Hak::_sub_imu1DataGetCallback, this);
+      sub2 = nh.subscribe(TOPIC_SUB_2, 40, &Hak::_sub_imu2DataGetCallback, this);
     }
     // Create service to record elbow angles
     ros::ServiceServer service = nh.advertiseService("elbowAngles", &Hak::_srv_recordElbowAngles, this);
@@ -496,6 +483,7 @@ public:
         ROS_WARN("No available data for current cycle");
       }
 
+      // db_field_print(DB_ARM_ELBOW_ANGLES,0);
       // db_field_print(DB_IMU_QUATERNION,0);
       // db_field_print(DB_IMU_QUATERNION,1);
       // quaternion_print(q_sensors[0],"up_arm");
