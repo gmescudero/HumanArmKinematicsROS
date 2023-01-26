@@ -1,1 +1,1 @@
-calib_method: "twoAxesOnline" # "static" "twoAxes" "twoAxesOnline"
+calib_method: "twoAxes" # "static" "twoAxes" "twoAxesOnline"

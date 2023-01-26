@@ -186,20 +186,19 @@ private:
       calibrationStep = DONE;
       calibrationStartTime = ros::Time::now();
       // Static calibration
-      if (STATIC == configCalibMethod) {
-        Quaternion known_quats[2] = { /* Quats for T-pose */
-          {.w = 1.0, .v={0.0, 0.0, 0.0}},
-          {.w = 1.0, .v={0.0, 0.0, 0.0}},
-        };
-        for (int i = 0; RET_OK == status && i < IMUS_NUM; i++) {
-            // Retrieve Imu quaternion data
-            double q_buff[4];
-            Quaternion q_tmp;
-            status = db_read(DB_IMU_QUATERNION, i, q_buff);
-            if (RET_OK == status) quaternion_from_buffer_build(q_buff, &q_sensors[i]);
-        }
-        if (RET_OK == status) cal_static_imu_quat_calibration_set(known_quats, q_sensors);
+      Quaternion known_quats[2] = { /* Quats for T-pose */
+        {.w = 1.0, .v={0.0, 0.0, 0.0}},
+        {.w = 1.0, .v={0.0, 0.0, 0.0}},
+      };
+      for (int i = 0; RET_OK == status && i < IMUS_NUM; i++) {
+          // Retrieve Imu quaternion data
+          double q_buff[4];
+          Quaternion q_tmp;
+          status = db_read(DB_IMU_QUATERNION, i, q_buff);
+          if (RET_OK == status) quaternion_from_buffer_build(q_buff, &q_sensors[i]);
       }
+      if (RET_OK == status) cal_static_imu_quat_calibration_set(known_quats, q_sensors);
+
       // Zero the elbow angles
       if (RET_OK == status) status = arm_elbow_angles_zero(
         0.0,0.0,q_sensors[0],q_sensors[1],elbowRotFE,elbowRotPS);
@@ -224,22 +223,22 @@ private:
    * 
    */
   void _hakCalibrationDoneHandle() {
-    if (STATIC == configCalibMethod) {
+      // Static calibration
       if (RET_OK == status) status = cal_static_imu_quat_calibrated_data_get(q_sensors);
       if (RET_OK == status) ROS_DEBUG("Calibrated quats: <%f,%f,%f,%f> <%f,%f,%f,%f>",
         q_sensors[0].w,q_sensors[0].v[0],q_sensors[0].v[1],q_sensors[0].v[2],
         q_sensors[1].w,q_sensors[1].v[0],q_sensors[1].v[1],q_sensors[1].v[2]
       );
       if (RET_OK != status) ROS_ERROR("Failed to retrieve calibrated imus");
-    }
-    else if (TWO_AXES_ONLINE == configCalibMethod) { // /s1_imu/reset_heading
+      // Permorm recalibration 
+      if (TWO_AXES_ONLINE == configCalibMethod) { // /s1_imu/reset_heading
       double oldCalibError = calibrationError;
       /* Update the observations buffer */
       if (RET_OK == status) status = cal_gn2_observations_from_database_update(minObservationVelocity);
       /* Compute current calibration error*/
       if (RET_OK == status) status = cal_gn2_root_mean_square(elbowRotFE,elbowRotPS, &calibrationError);
       /* Check error and recalibrate if needed */
-      if (RET_OK == status && calibrationError > referenceCalibrationError*0.9) {
+      if (RET_OK == status && calibrationError > referenceCalibrationError*0.95) {
         calibrationStartTime = ros::Time::now();
         status = cal_gn2_two_rot_axes_calib_correct(elbowRotFE,elbowRotPS);
         if (RET_OK == status) {

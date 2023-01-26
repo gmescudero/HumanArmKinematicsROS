@@ -89,7 +89,7 @@ plt.grid(True)
 plt.title("Flexion-Extension limits over time")
 plt.xlabel("time (s)")
 plt.ylabel("angle (º)")
-plt.legend(("fe_min","fe_max"))
+plt.legend(("fe_max","fe_min"))
 plt.savefig(f"{file}/fe_{t_init}.png")
 plt.close()
 
