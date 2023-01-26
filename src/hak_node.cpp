@@ -154,7 +154,11 @@ private:
       calibrationStep = ZEROING;
       calibrationStartTime = ros::Time::now();
       ROS_INFO("\n\n\t\tStand in T-Pose to calibrate\n");
-      if (RET_OK == status) status = cal_gn2_two_rot_axes_calib(elbowRotFE,elbowRotPS);
+      // if (RET_OK == status) status = cal_gn2_two_rot_axes_calib(elbowRotFE,elbowRotPS);
+      if (RET_OK == status) {
+        elbowRotFE[0] = 0.0; elbowRotFE[1] = 0.0; elbowRotFE[2] = 1.0; 
+        elbowRotPS[0] = 1.0; elbowRotPS[1] = 0.0; elbowRotPS[2] = 0.0; 
+      }
       if (RET_OK == status) {
         /* Calculate minimum velocity for recalibration observations */
         DB_BUFFER_STATS stats = db_field_buffer_stats_compute(DB_CALIB_OMEGA,0);
@@ -238,15 +242,20 @@ private:
       /* Compute current calibration error*/
       if (RET_OK == status) status = cal_gn2_root_mean_square(elbowRotFE,elbowRotPS, &calibrationError);
       /* Check error and recalibrate if needed */
-      if (RET_OK == status && calibrationError > referenceCalibrationError*0.95) {
-        calibrationStartTime = ros::Time::now();
-        status = cal_gn2_two_rot_axes_calib_correct(elbowRotFE,elbowRotPS);
-        if (RET_OK == status) {
-          ROS_INFO("\n\n\t\tOnline recalibration performed\n");
-          ROS_INFO("\tCalibration error went from %f to %f (reference at %f)", 
-              oldCalibError, calibrationError,referenceCalibrationError);
-          ROS_INFO("\tRotation vector 1:[%f,%f,%f]", elbowRotFE[0],elbowRotFE[1], elbowRotFE[2]);
-          ROS_INFO("\tRotation vector 2:[%f,%f,%f]", elbowRotPS[0],elbowRotPS[1], elbowRotPS[2]);
+      if (RET_OK == status) {
+        if (calibrationError > referenceCalibrationError){
+          calibrationStartTime = ros::Time::now();
+          status = cal_gn2_two_rot_axes_calib_correct(elbowRotFE,elbowRotPS);
+          if (RET_OK == status) {
+            ROS_INFO("\n\n\t\tOnline recalibration performed\n");
+            ROS_INFO("\tCalibration error went from %f to %f (reference at %f)", 
+                oldCalibError, calibrationError,referenceCalibrationError);
+            ROS_INFO("\tRotation vector 1:[%f,%f,%f]", elbowRotFE[0],elbowRotFE[1], elbowRotFE[2]);
+            ROS_INFO("\tRotation vector 2:[%f,%f,%f]", elbowRotPS[0],elbowRotPS[1], elbowRotPS[2]);
+          }
+          else {
+            referenceCalibrationError = referenceCalibrationError*0.97 + calibrationError*0.02 + oldCalibError*0.01;
+          }
         }
         else ROS_ERROR("Failed to perform online recalibration");
       }

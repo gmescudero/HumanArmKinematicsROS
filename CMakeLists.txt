@@ -175,7 +175,8 @@ add_custom_command(
 # add_dependencies(listener beginner_tutorials_generate_messages_cpp)
 
 ## Used to call the building command for the Human Arm Kinematics library
-add_custom_target(humanak_lib ALL DEPENDS ${CMAKE_CURRENT_BINARY_DIR}/humanak)
+# add_custom_target(humanak_lib ALL DEPENDS ${CMAKE_CURRENT_BINARY_DIR}/humanak)
+add_custom_target(humanak_lib ALL DEPENDS humanak)
 
 add_executable(hak_node src/hak_node.cpp)
 add_dependencies(hak_node ${PROJECT_NAME}_generate_messages_cpp humanak_lib)

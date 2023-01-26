@@ -36,9 +36,9 @@ def plotWithLinReg(x,y,dataName,title,xlimits=None, ylimits=None):
     print(f"\tRegression: {regression}")
     r2 = coefficient_of_determination(x,y,*regression)
     print(f"\tCoefficient of determination: {r2*100:.3f} %")
-    print(f"\tTendency in degrees per min: {regression[1]*60}")
-    print(f"\tStandard deviation: {np.std(y)}")
-    print(f"\tTotal deviation: {regression[1]*(x[0]-x[-1])}")
+    print(f"\tTendency in degrees per min: {regression[1]*60:.3f}")
+    print(f"\tStandard deviation: {np.std(y):.3f}")
+    print(f"\tTotal deviation: {regression[1]*(x[0]-x[-1]):.3f}")
 
     plt.scatter(x,y)
     plt.plot( (x[0], x[-1]), (regression[0]+regression[1]*x[0],regression[0]+regression[1]*x[-1]),'r')
