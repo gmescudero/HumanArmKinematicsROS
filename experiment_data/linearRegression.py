@@ -1,9 +1,12 @@
+#!/usr/bin/python3
+
 import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
 
-# FILE = "data_1674663174_gme_static/data_1674663174.csv"
-FILE = "data_1674713370_gme_corrected/data_1674713370.csv"
+FILE = "data_1674663174_gme_static/data_1674663174.csv"
+# FILE = "data_1674713370_gme_corrected/data_1674713370.csv"
+# FILE = "data_1674801508_gme_recalib/data_1674801508.csv"
 
 def estimate_coef(x, y):
     # number of observations/points
@@ -30,9 +33,11 @@ def coefficient_of_determination(x,y,b0,b1):
     return 1 - (ssr/sst)
 
 
-def plotWithLinReg(x,y,dataName,title,xlimits=None, ylimits=None):
+def plotWithLinReg(x,y,dataName,title,xlimits=None, ylimits=None,gain=1.0,offset=0.0):
+    dataLen = min(len(x),len(y))
+    y = gain*np.ones(dataLen)*y + offset*np.ones(dataLen)
     regression = estimate_coef(x,y)
-    print(f"{title} linear regression:")
+    print(f"{title} linear regression ({dataName}):")
     print(f"\tRegression: {regression}")
     r2 = coefficient_of_determination(x,y,*regression)
     print(f"\tCoefficient of determination: {r2*100:.3f} %")
@@ -60,25 +65,25 @@ t0 = df.t_secs[0]
 df_aux = df[(df['recType']=="FE_MAX")]
 x = np.array([t-t0 for t in df_aux['t_secs']])
 y = np.array(df_aux["fe"])
-regression = plotWithLinReg(x,y,"fe_max","Flexion-Extension",ylimits=(40,165))
+regression = plotWithLinReg(x,y,"fe_max","Flexion-Extension",ylimits=(40,165),offset=0) # offset=20
 df_aux = None
 
 df_aux = df[(df['recType']=="FE_MIN")]
 x = np.array([t-t0 for t in df_aux['t_secs']])
 y = np.array(df_aux["fe"])
-regression = plotWithLinReg(x,y,"fe_min","Flexion-Extension",ylimits=(10,-130))
-df_aux = None
-
-df_aux = df[(df['recType']=="PS_MAX")]
-x = np.array([t-t0 for t in df_aux['t_secs']])
-y = np.array(df_aux["ps"])
-regression = plotWithLinReg(x,y,"ps_max","Pronation-Supination",ylimits=(-85,-20))
+regression = plotWithLinReg(x,y,"fe_min","Flexion-Extension",ylimits=(-130,35),offset=0) # offset=20
 df_aux = None
 
 df_aux = df[(df['recType']=="PS_MIN")]
 x = np.array([t-t0 for t in df_aux['t_secs']])
 y = np.array(df_aux["ps"])
-regression = plotWithLinReg(x,y,"ps_min","Pronation-Supination",ylimits=(60,110))
+regression = plotWithLinReg(x,y,"ps_max","Pronation-Supination",ylimits=(55,110),offset=0) # offset=50
+df_aux = None
+
+df_aux = df[(df['recType']=="PS_MAX")]
+x = np.array([t-t0 for t in df_aux['t_secs']])
+y = np.array(df_aux["ps"])
+regression = plotWithLinReg(x,y,"ps_min","Pronation-Supination",ylimits=(-90,-20),offset=0) # offset=50
 df_aux = None
 
 # x = np.array([t-df['t_secs'][0] for t in df['t_secs']])

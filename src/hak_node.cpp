@@ -13,6 +13,7 @@
 #include "sensor_msgs/JointState.h"
 #include "sensor_msgs/Imu.h"
 #include "hak_package/RecordElbowAngles.h"
+#include "hak_package/Recalib.h"
 
 extern "C"{
 #include "launch.h"
@@ -254,7 +255,8 @@ private:
             ROS_INFO("\tRotation vector 2:[%f,%f,%f]", elbowRotPS[0],elbowRotPS[1], elbowRotPS[2]);
           }
           else {
-            referenceCalibrationError = referenceCalibrationError*0.97 + calibrationError*0.02 + oldCalibError*0.01;
+            // Make the reference slowly update with newer error values
+            referenceCalibrationError = referenceCalibrationError*0.97 + oldCalibError*0.02 + calibrationError*0.01;
           }
         }
         else ROS_ERROR("Failed to perform online recalibration");
@@ -401,6 +403,16 @@ private:
     return false;
   }
 
+  bool _srv_recalibrate(hak_package::Recalib::Request  &req,
+                        hak_package::Recalib::Response &res)
+  {
+    calibrationStep = NOT_DONE;
+    calibrationStartTime = ros::Time::now();
+    _hakCalibrationNotDoneHandle();
+    ROS_INFO("Recalibration started");
+    return true;
+  }
+
 public:
   /**
    * @brief Construct the Hak object
@@ -441,7 +453,8 @@ public:
       sub2 = nh.subscribe(TOPIC_SUB_2, 40, &Hak::_sub_imu2DataGetCallback, this);
     }
     // Create service to record elbow angles
-    ros::ServiceServer service = nh.advertiseService("elbowAngles", &Hak::_srv_recordElbowAngles, this);
+    ros::ServiceServer service1 = nh.advertiseService("elbowAngles", &Hak::_srv_recordElbowAngles, this);
+    ros::ServiceServer service2 = nh.advertiseService("recalibrate", &Hak::_srv_recalibrate, this);
 
     // Initialize ROS message
     jointsMsg.header.frame_id.assign("jointSetPointScheduler");

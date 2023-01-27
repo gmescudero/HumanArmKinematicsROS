@@ -63,6 +63,7 @@ find_package(catkin REQUIRED COMPONENTS
 add_service_files(
   FILES
   RecordElbowAngles.srv
+  Recalib.srv
 )
 
 ## Generate actions in the 'action' folder
